@@ -1,0 +1,10 @@
+*.s#?
+*.b#?
+.modgit
+*.gch
+firmware*
+.pio*
+.sconsign.dblite
+settings.h
+rn2483*
+rfm95*
