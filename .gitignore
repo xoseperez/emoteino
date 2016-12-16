@@ -6,5 +6,6 @@ firmware*
 .pio*
 .sconsign.dblite
 settings.h
-rn2483*
+rn2483-custom
+rn2483-rn2xx3
 rfm95*

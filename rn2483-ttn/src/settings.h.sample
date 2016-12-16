@@ -1,0 +1,73 @@
+// -----------------------------------------------------------------------------
+// Configutation
+// -----------------------------------------------------------------------------
+
+#define DEBUG
+
+// GPIO Configutation
+#define LED_PIN             9
+#define BATTERY_PIN         A7
+#define CURRENT_PIN         A1
+
+// Communications
+#define SERIAL_BAUD         115200
+#define SOFTSERIAL_RX_PIN   11
+#define SOFTSERIAL_TX_PIN   10
+#define SOFTSERIAL_BAUD     57600
+#define RN2483_RESET_PIN    6
+
+// TTN Configuration
+#define TTN_DEVADDR         "00000000"
+#define TTN_NWKSKEY         "00000000000000000000000000000000"
+#define TTN_APPSKEY         "00000000000000000000000000000000"
+#define TTN_FREQPLAN        TTN_FP_EU868
+
+// Sleep intervals of 10 seconds
+#define SLEEP_INTERVAL      10000
+
+// Perform a sensor reading every minute (6*10s)
+#define READING_COUNTS      6
+
+// Send readings after 5 minutes
+#define SENDING_COUNTS      5
+
+// For a ECS1030-L72 CT
+// Specs: 2000 turns ratio (T) without built-in burdenresistor
+// Using 68 ohm burden resistor (R)
+// A/V = T/R = 2000 * 68 = 29.41
+// Real life comparisons showed a 10% bias with this value
+// So I am using a correction factor
+//#define CURRENT_RATIO       26.20
+
+// For a YHDC SCT013
+// Specs: 30A/1V
+#define CURRENT_RATIO       30.00
+
+// Number of samples to take for each reading
+#define CURRENT_SAMPLES     1000
+
+// Mains voltage to calculate apparent power
+#define MAINS_VOLTAGE       230
+
+// ADC precission
+#define ADC_BITS            10
+#define ADC_COUNTS          (1 << ADC_BITS)
+
+// ADC reference volatge in V
+#define ADC_REFERENCE       3.3
+
+// Battery monitoring circuitry:
+// Vi -- R1 -- A1 (Vo) -- R2 -- D12 (GND)
+//
+// These values have been measured with a multimeter:
+// R1 = 470K
+// R2 = 470k
+//
+// Formulae:
+// Vo = Vi * R2 / (R1 + R2)
+// Vi = Vo * (R1 + R2) / R2
+// Vo = X * 3300 / 1024;
+//
+// Thus:
+// Vi = X * 3300 * (470 + 470) / 1024 / 470;
+#define BATTERY_RATIO       6.45
