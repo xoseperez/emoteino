@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="7.3.0">
+<eagle version="8.2.1">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -1426,7 +1426,7 @@ JST PH 2-pin thru-home side entry</description>
 <instance part="R2" gate="G$1" x="43.18" y="99.06" rot="R270"/>
 <instance part="R3" gate="G$1" x="43.18" y="83.82" rot="R270"/>
 <instance part="C1" gate="G$1" x="53.34" y="83.82"/>
-<instance part="CN1" gate="G$1" x="193.04" y="73.66"/>
+<instance part="CN1" gate="G$1" x="111.76" y="38.1"/>
 <instance part="FRAME1" gate="G$1" x="0" y="0"/>
 <instance part="FRAME1" gate="G$2" x="162.56" y="0"/>
 <instance part="R4" gate="G$1" x="96.52" y="99.06" rot="R270"/>
@@ -1441,8 +1441,8 @@ JST PH 2-pin thru-home side entry</description>
 <net name="GND" class="1">
 <segment>
 <pinref part="CN1" gate="G$1" pin="1"/>
-<wire x1="190.5" y1="76.2" x2="177.8" y2="76.2" width="0.1524" layer="91"/>
-<label x="177.8" y="76.2" size="1.778" layer="95"/>
+<wire x1="109.22" y1="40.64" x2="96.52" y2="40.64" width="0.1524" layer="91"/>
+<label x="96.52" y="40.64" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="ANALOGSIDE" gate="G$1" pin="13"/>
@@ -1695,8 +1695,8 @@ JST PH 2-pin thru-home side entry</description>
 <net name="VIN" class="0">
 <segment>
 <pinref part="CN1" gate="G$1" pin="2"/>
-<wire x1="190.5" y1="73.66" x2="177.8" y2="73.66" width="0.1524" layer="91"/>
-<label x="177.8" y="73.66" size="1.778" layer="95"/>
+<wire x1="109.22" y1="38.1" x2="96.52" y2="38.1" width="0.1524" layer="91"/>
+<label x="96.52" y="38.1" size="1.778" layer="95"/>
 </segment>
 <segment>
 <pinref part="ANALOGSIDE" gate="G$1" pin="12"/>
