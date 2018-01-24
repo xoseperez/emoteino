@@ -112,12 +112,14 @@ void awake() {
     // Nothing to do
 }
 
-void sleepRadio() {
+bool sleepRadio() {
     #ifdef DEBUG
         Serial.println("[MAIN] Sleeping the radio");
     #endif
+    bool response = true;
     ttn.sleep(SLEEP_INTERVAL - millis() + wakeTime);
     if (loraSerial.available()) loraSerial.read();
+    return response;
 }
 
 void sleepController() {
@@ -159,7 +161,8 @@ void doStore() {
 // Sends the 5 minute averages
 void doSend() {
 
-    byte payload[SENDING_COUNTS * 2 + 2];
+    byte size = SENDING_COUNTS * 2 + 2;
+    byte payload[size];
 
     for (int i=0; i<SENDING_COUNTS; i++) {
         payload[i*2] = (power[i] >> 8) & 0xFF;
@@ -171,7 +174,13 @@ void doSend() {
     payload[SENDING_COUNTS * 2 + 1] = voltage & 0xFF;
 
     #ifdef DEBUG
-        Serial.println("[MAIN] Sending");
+        Serial.print("[MAIN] Sending: ");
+        char buffer[6];
+        for (byte i=0; i<size; i++) {
+            sprintf(buffer, "0x%02X ", payload[i]);
+            Serial.print(buffer);
+        }
+        Serial.println();
     #endif
     ttn.sendBytes(payload, SENDING_COUNTS * 2 + 2, 1, false);
 
@@ -214,8 +223,14 @@ void setup() {
     loraSerial.begin(SOFTSERIAL_BAUD);
     loraSerial.flush();
     loraReset();
-    ttn.personalize(TTN_DEVADDR, TTN_NWKSKEY, TTN_APPSKEY);
-    ttn.showStatus();
+
+    #if TTN_ABP
+        ttn.personalize(TTN_DEVADDR, TTN_NWKSKEY, TTN_APPSKEY);
+        ttn.showStatus();
+    #else
+        ttn.showStatus();
+        ttn.join(TTN_APPEUI, TTN_APPKEY);
+    #endif
 
     // Set initial wake up time
     wakeTime = millis();
