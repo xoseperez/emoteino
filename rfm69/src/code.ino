@@ -28,9 +28,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // -----------------------------------------------------------------------------
 
 RFM69Manager radio;
+#if HAS_FLASH
+    SPIFlash flash(FLASH_SS, 0xEF30);
+#endif
 
 unsigned short count = 0;
 double sum = 0;
+double max = 0;
 
 // -----------------------------------------------------------------------------
 // Hardware
@@ -62,6 +66,18 @@ void radioSetup() {
     radio.initialize(FREQUENCY, NODEID, NETWORKID, ENCRYPTKEY, GATEWAYID, ATC_RSSI);
     radio.sleep();
 }
+
+// -----------------------------------------------------------------------------
+// Flash
+// -----------------------------------------------------------------------------
+
+#if HAS_FLASH
+void flashSetup() {
+    if (flash.initialize()) {
+        flash.sleep();
+    }
+}
+#endif
 
 // -----------------------------------------------------------------------------
 // Readings
@@ -104,12 +120,19 @@ unsigned int getBattery() {
 void sendPower() {
 
     double current = (count > 0) ? sum / count : 0;
-    unsigned int power = current * MAINS_VOLTAGE;
+    unsigned int power_avg = current * MAINS_VOLTAGE;
+    unsigned int power_max = max * MAINS_VOLTAGE;
+    max = 0;
 
     char buffer[6];
-    sprintf(buffer, "%d", power);
-    radio.send((char *) "POW", buffer, (uint8_t) 2);
-    radio.sleep();
+    #if SEND_POWER
+        sprintf(buffer, "%d", power_avg);
+        radio.send((char *) "POW", buffer, (uint8_t) 2);
+    #endif
+    #if SEND_POWER_MAX
+        sprintf(buffer, "%d", power_max);
+        radio.send((char *) "MAX", buffer, (uint8_t) 2);
+    #endif
 
 }
 
@@ -120,7 +143,6 @@ void sendBattery() {
     char buffer[6];
     sprintf(buffer, "%d", voltage);
     radio.send((char *) "BAT", buffer, (uint8_t) 2);
-    radio.sleep();
 
 }
 
@@ -130,9 +152,14 @@ void send()  {
     sendPower();
 
     // Send battery status once every 10 messages, starting with the first one
-    static unsigned char batteryCountdown = 0;
-    if (batteryCountdown == 0) sendBattery();
-    batteryCountdown = (batteryCountdown + 1) % SEND_BATTERY_EVERY;
+    #if SEND_BATTERY
+        static unsigned char batteryCountdown = 0;
+        if (batteryCountdown == 0) sendBattery();
+        batteryCountdown = (batteryCountdown + 1) % SEND_BATTERY_EVERY;
+    #endif
+
+    // Radio back to sleep
+    radio.sleep();
 
     // Show visual notification
     blink(1, NOTIFICATION_TIME);
@@ -145,6 +172,9 @@ void send()  {
 
 void setup() {
     hardwareSetup();
+    #if HAS_FLASH
+        flashSetup();
+    #endif
     radioSetup();
     delay(50);
 }
@@ -167,6 +197,7 @@ void loop() {
         // At this point we perform a reading
         double current = getCurrent(CURRENT_SAMPLES);
         sum += current;
+        if (current > max) max = current;
         ++count;
 
         // Debug

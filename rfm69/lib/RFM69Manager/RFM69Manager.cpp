@@ -32,32 +32,51 @@ in an #if clause like this:
 
 bool RFM69Manager::initialize(uint8_t frequency, uint8_t nodeID, uint8_t networkID, const char* key, uint8_t gatewayID, int16_t targetRSSI) {
 
-    bool ret = RFM69_ATC::initialize(frequency, nodeID, networkID);
+    bool ret = RFM69_CLASS::initialize(frequency, nodeID, networkID);
     encrypt(key);
     _gatewayID = gatewayID;
-    if (_gatewayID > 0) enableAutoPower(targetRSSI);
+    #if ENABLE_ATC
+        if (_gatewayID > 0) enableAutoPower(targetRSSI);
+    #else
+        if (_gatewayID > 0) setPowerLevel(31);
+    #endif
     if (_isRFM69HW) setHighPower();
 
     #if RADIO_DEBUG
+        char buff[50];
+        sprintf(buff, "[RADIO] Working at %d Mhz", frequency == RF69_433MHZ ? 433 : frequency == RF69_868MHZ ? 868 : 915);
+        Serial.println(buff);
         Serial.print(F("[RADIO] Node: "));
         Serial.println(nodeID);
         Serial.print(F("[RADIO] Network: "));
         Serial.println(networkID);
         if (gatewayID == 0) {
-            Serial.println("[RADIO] This node is a gateway.");
+            Serial.println("[RADIO] This node is a gateway");
         } else {
             Serial.print(F("[RADIO] Gateway: "));
             Serial.println(gatewayID);
         }
-
-        char buff[50];
-        sprintf(buff, "[RADIO] Working at %d Mhz...", frequency == RF69_433MHZ ? 433 : frequency == RF69_868MHZ ? 868 : 915);
-        Serial.println(buff);
-        Serial.println(F("[RADIO] Auto Transmission Control (ATC) enabled"));
+        #if ENABLE_ATC
+            Serial.println(F("[RADIO] Auto Transmission Control (ATC) enabled"));
+        #else
+            Serial.println(F("[RADIO] Auto Transmission Control (ATC) disabled"));
+        #endif
     #endif
 
     return ret;
 
+}
+
+void RFM69Manager::promiscuous(bool promiscuous) {
+    RFM69_CLASS::spyMode(promiscuous);
+    _promiscuousMode = promiscuous;
+    #if RADIO_DEBUG
+        if (_promiscuousMode) {
+            Serial.println(F("[RADIO] Promiscuous mode ON"));
+        } else {
+            Serial.println(F("[RADIO] Promiscuous mode OFF"));
+        }
+    #endif
 }
 
 void RFM69Manager::onMessage(TMessageCallback fn) {
@@ -71,13 +90,18 @@ bool RFM69Manager::loop() {
     if (receiveDone()) {
 
         uint8_t senderID = SENDERID;
+        uint8_t targetID = _promiscuousMode ? TARGETID : _address;
         int16_t rssi = RSSI;
         uint8_t length = DATALEN;
         char buffer[length + 1];
         strncpy(buffer, (const char *) DATA, length);
         buffer[length] = 0;
 
-        if (ACKRequested()) sendACK();
+        // Do not send ACKs in promiscuous mode,
+        // we want to listen without being heard
+        if (!_promiscuousMode) {
+            if (ACKRequested()) sendACK();
+        }
 
         uint8_t parts = 1;
         for (uint8_t i=0; i<length; i++) {
@@ -96,7 +120,8 @@ bool RFM69Manager::loop() {
 
             _message.messageID = ++_receiveCount;
             _message.packetID = packetID;
-            _message.nodeID = senderID;
+            _message.senderID = senderID;
+            _message.targetID = targetID;
             _message.name = name;
             _message.value = value;
             _message.rssi = rssi;
@@ -133,7 +158,7 @@ bool RFM69Manager::send(uint8_t destinationID, char * name, char * value, uint8_
     if (retries > 0) {
         ret = sendWithRetry(destinationID, message, strlen(message), retries);
     } else {
-        RFM69_ATC::send(destinationID, message, strlen(message), requestACK);
+        RFM69_CLASS::send(destinationID, message, strlen(message), requestACK);
     }
 
     #if RADIO_DEBUG
